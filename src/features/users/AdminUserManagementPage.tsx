@@ -1,36 +1,38 @@
-import React from "react";
-import { useGetUsersQuery, useBlockUserMutation } from "../../services/apiSlice";
-import { Card, CardContent, Button } from "@/components/ui";
+import { useGetUsersQuery, useBlockUserMutation } from "@/services/apiSlice";
+import { Navbar, Footer, Container, Card, CardContent, Button } from "@/components/ui";
 
-export default function AdminUserManagementPage() {
-  const { data: users, isLoading } = useGetUsersQuery();
+export default function AdminUserManagement() {
+  const { data: users, refetch } = useGetUsersQuery();
   const [blockUser] = useBlockUserMutation();
 
   const toggleBlock = async (id: string, blocked: boolean) => {
-    try {
-      await blockUser({ id, blocked: !blocked }).unwrap();
-    } catch {
-      alert("Failed to update user");
-    }
+    await blockUser({ id, blocked }).unwrap();
+    refetch();
   };
 
   return (
-    <Card className="p-4">
-      <CardContent>
-        <h2 className="text-xl">Manage Users</h2>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          <ul className="mt-4 space-y-2">
-            {users?.map((u: any) => (
-              <li key={u._id} className="flex justify-between items-center border p-2 rounded">
-                <span>{u.email} ({u.role})</span>
-                <Button onClick={() => toggleBlock(u._id, u.blocked)}>{u.blocked ? "Unblock" : "Block"}</Button>
-              </li>
-            )) || <p>No users</p>}
-          </ul>
-        )}
-      </CardContent>
-    </Card>
+    <>
+      <Navbar />
+      <Container className="py-12">
+        <h1 className="text-2xl font-bold mb-6">User Management</h1>
+        <div className="grid gap-4">
+          {users?.map((user: any) => (
+            <Card key={user._id}>
+              <CardContent className="flex justify-between items-center">
+                <div>
+                  <p className="font-semibold">{user.name}</p>
+                  <p className="text-gray-500">{user.email}</p>
+                  <p className="text-sm">{user.role}</p>
+                </div>
+                <Button onClick={() => toggleBlock(user._id, !user.blocked)}>
+                  {user.blocked ? "Unblock" : "Block"}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </Container>
+      <Footer />
+    </>
   );
 }

@@ -1,6 +1,6 @@
 // RTK Query + axios baseQuery wrapper
-import { createApi } from "@reduxjs/toolkit/query/react";
 import axiosInstance from "../api/axiosBase";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const axiosBaseQuery =
   () =>

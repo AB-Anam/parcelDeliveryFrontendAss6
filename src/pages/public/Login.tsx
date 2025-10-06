@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Navbar, Footer, Container, Card, CardContent, Input, Button } from "@/components/ui";
-import { useLoginMutation } from "@/services/apiSlice";
+import { useLoginMutation } from "@/services/authApi";
+
 import { useDispatch } from "react-redux";
 import { setCredentials } from "@/features/auth/authSlice";
 import { useNavigate } from "react-router-dom";

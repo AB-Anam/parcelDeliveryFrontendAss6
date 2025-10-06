@@ -1,5 +1,5 @@
 import React from "react";
-import { useGetMyParcelsQuery } from "../../services/apiSlice";
+import { useCreateParcelMutation, useGetMyParcelsQuery } from "@/services/parcelApi";
 import { Card, CardContent } from "@/components/ui";
 import { Link } from "react-router-dom";
 

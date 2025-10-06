@@ -16,6 +16,10 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
 export default function App() {
+  // ✅ Access environment variables here
+  const apiUrl = import.meta.env.VITE_API_URL;
+  console.log("API URL:", apiUrl); // Example: log it for debugging
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />

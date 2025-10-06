@@ -1,35 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Landing from "./pages/public/Landing";
+import Login from "./pages/public/Login";
+import Register from "./pages/public/Register";
 
-function App() {
-  const [count, setCount] = useState(0)
+import SenderDashboard from "./pages/sender/SenderDashboard";
+import ReceiverDashboard from "./pages/receiver/ReceiverDashboard";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
+import CreateParcelPage from "./features/parcels/CreateParcelPage";
+import AdminUserManagementPage from "./features/users/AdminUserManagementPage";
+import AdminLayout from "./layouts/AdminLayout";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import RoleRoute from "./components/RoleRoute";
+
+export default function App() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-export default App
+      <Route
+        path="/sender/*"
+        element={
+          <ProtectedRoute>
+            <RoleRoute role="sender">
+              <Routes>
+                <Route index element={<SenderDashboard />} />
+                <Route path="create" element={<CreateParcelPage />} />
+              </Routes>
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/receiver/*"
+        element={
+          <ProtectedRoute>
+            <RoleRoute role="receiver">
+              <Routes>
+                <Route index element={<ReceiverDashboard />} />
+              </Routes>
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute>
+            <RoleRoute role="admin">
+              <AdminLayout />
+            </RoleRoute>
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<AdminUserManagementPage />} />
+        {/* Add admin parcel management route later */}
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

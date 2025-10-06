@@ -1,6 +1,10 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+// src/lib/utils.ts
+import { clsx } from "clsx";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+/**
+ * Merge multiple class strings into one.
+ * Similar to twMerge, but now using clsx only.
+ */
+export function cn(...inputs: Parameters<typeof clsx>) {
+  return clsx(...inputs);
 }

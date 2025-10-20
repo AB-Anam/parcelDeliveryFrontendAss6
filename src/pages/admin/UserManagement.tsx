@@ -1,47 +1,51 @@
-// src/pages/admin/UserManagement.tsx
 import React from "react";
 import { useGetUsersQuery, useBlockUserMutation, User } from "@/services/userApi";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { Loader2 } from "lucide-react";
 
-const UserManagement: React.FC = () => {
-  const { data: users, isLoading, error } = useGetUsersQuery();
+export default function UserManagement(): JSX.Element {
+  const { data: users, isLoading, error, refetch } = useGetUsersQuery();
   const [blockUser, { isLoading: isBlocking }] = useBlockUserMutation();
 
-  const handleBlockToggle = async (user: User) => {
+  const handleToggle = async (user: User) => {
     try {
       await blockUser({ id: user._id, blocked: !user.blocked }).unwrap();
+      // refetch to get latest list (RTK invalidation may already do this)
+      refetch();
     } catch (err) {
       console.error(err);
+      alert("Failed to update user");
     }
   };
 
   if (isLoading)
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
 
   if (error)
     return (
-      <div className="flex items-center justify-center h-screen text-red-600">
+      <div className="text-red-600 p-6">
         Failed to fetch users.
       </div>
     );
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
-      <Card className="max-w-6xl mx-auto shadow-md border border-gray-200">
+    <Container className="py-12">
+      <Card className="max-w-6xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl font-semibold">User Management</CardTitle>
+          <CardTitle className="text-2xl">User Management</CardTitle>
         </CardHeader>
+
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white rounded-lg">
+            <table className="w-full table-auto border-collapse">
               <thead>
-                <tr className="bg-gray-100 text-left text-gray-700 uppercase text-sm">
+                <tr className="text-left bg-gray-100">
                   <th className="py-3 px-4">Name</th>
                   <th className="py-3 px-4">Email</th>
                   <th className="py-3 px-4">Role</th>
@@ -50,41 +54,42 @@ const UserManagement: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {users?.map((user) => (
-                  <tr key={user._id} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium">{user.name}</td>
-                    <td className="py-3 px-4 text-gray-600">{user.email}</td>
-                    <td className="py-3 px-4">{user.role}</td>
-                    <td className="py-3 px-4">
-                      {user.blocked ? (
-                        <span className="text-red-600 font-medium">Blocked</span>
-                      ) : (
-                        <span className="text-green-600 font-medium">Active</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Button
-                        size="sm"
-                        variant={user.blocked ? "outline" : "destructive"}
-                        disabled={isBlocking}
-                        onClick={() => handleBlockToggle(user)}
-                      >
-                        {user.blocked ? "Unblock" : "Block"}
-                      </Button>
+                {users && users.length > 0 ? (
+                  users.map((u: User) => (
+                    <tr key={u._id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4 font-medium">{u.name}</td>
+                      <td className="py-3 px-4 text-sm text-gray-600">{u.email}</td>
+                      <td className="py-3 px-4">{u.role}</td>
+                      <td className="py-3 px-4">
+                        {u.blocked ? (
+                          <span className="text-red-600 font-semibold">Blocked</span>
+                        ) : (
+                          <span className="text-green-600 font-semibold">Active</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Button
+                          onClick={() => handleToggle(u)}
+                          disabled={isBlocking}
+                          className="px-3 py-1"
+                        >
+                          {u.blocked ? "Unblock" : "Block"}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="py-6 text-center text-gray-500">
+                      No users found.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
-
-            {users?.length === 0 && (
-              <p className="text-gray-500 mt-4 text-center">No users found.</p>
-            )}
           </div>
         </CardContent>
       </Card>
-    </div>
+    </Container>
   );
-};
-
-export default UserManagement;
+}

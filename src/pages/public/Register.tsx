@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Navbar, Footer, Container, Card, CardContent, Input, Button } from "@/components/ui";
-import { useRegisterMutation } from "@/services/apiSlice";
+import { useRegisterMutation } from "@/services/authApi";
 import { useNavigate } from "react-router-dom";
 
 const schema = z.object({

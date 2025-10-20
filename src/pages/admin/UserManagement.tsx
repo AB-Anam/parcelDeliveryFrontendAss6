@@ -1,95 +1,42 @@
+// src/pages/admin/UserManagement.tsx
 import React from "react";
-import { useGetUsersQuery, useBlockUserMutation, User } from "@/services/userApi";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Container } from "@/components/ui";
-import { Button } from "@/components/ui";
-import { Loader2 } from "lucide-react";
+import { useBlockUserMutation, useGetUsersQuery } from "@/services/apiSlice";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-export default function UserManagement(): JSX.Element {
-  const { data: users, isLoading, error, refetch } = useGetUsersQuery();
-  const [blockUser, { isLoading: isBlocking }] = useBlockUserMutation();
+const UserManagement: React.FC = () => {
+  const { data: users, isLoading, isError } = useGetUsersQuery();
+  const [blockUser] = useBlockUserMutation();
 
-  const handleToggle = async (user: User) => {
-    try {
-      await blockUser({ id: user._id, blocked: !user.blocked }).unwrap();
-      // refetch to get latest list (RTK invalidation may already do this)
-      refetch();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update user");
-    }
+  if (isLoading) return <div className="text-center mt-20">Loading users...</div>;
+  if (isError) return <div className="text-center mt-20 text-red-500">Failed to load users.</div>;
+
+  const handleBlockToggle = (id: string, blocked: boolean) => {
+    blockUser({ id, blocked: !blocked });
   };
 
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="text-red-600 p-6">
-        Failed to fetch users.
-      </div>
-    );
-
   return (
-    <Container className="py-12">
-      <Card className="max-w-6xl mx-auto">
-        <CardHeader>
-          <CardTitle className="text-2xl">User Management</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="text-left bg-gray-100">
-                  <th className="py-3 px-4">Name</th>
-                  <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-4">Role</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users && users.length > 0 ? (
-                  users.map((u: User) => (
-                    <tr key={u._id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium">{u.name}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{u.email}</td>
-                      <td className="py-3 px-4">{u.role}</td>
-                      <td className="py-3 px-4">
-                        {u.blocked ? (
-                          <span className="text-red-600 font-semibold">Blocked</span>
-                        ) : (
-                          <span className="text-green-600 font-semibold">Active</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <Button
-                          onClick={() => handleToggle(u)}
-                          disabled={isBlocking}
-                          className="px-3 py-1"
-                        >
-                          {u.blocked ? "Unblock" : "Block"}
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-gray-500">
-                      No users found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </Container>
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-bold">User Management</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {users?.map((user) => (
+          <Card key={user._id} className="p-4 hover:shadow-lg transition-shadow">
+            <p><span className="font-medium">Name:</span> {user.name}</p>
+            <p><span className="font-medium">Email:</span> {user.email}</p>
+            <p><span className="font-medium">Role:</span> {user.role}</p>
+            <p><span className="font-medium">Blocked:</span> {user.blocked ? "Yes" : "No"}</p>
+            <Button
+              variant={user.blocked ? "destructive" : "secondary"}
+              onClick={() => handleBlockToggle(user._id, !!user.blocked)}
+              className="mt-2"
+            >
+              {user.blocked ? "Unblock" : "Block"}
+            </Button>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
-}
+};
+
+export default UserManagement;

@@ -1,63 +1,79 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Navbar, Footer, Container, Card, CardContent, Input, Button } from "@/components/ui";
-import { useLoginMutation } from "@/services/authApi";
+// src/pages/public/Login.tsx
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useLoginMutation } from "@/services/apiSlice"; // make sure your apiSlice has this mutation
+import { cn } from "@/lib/utils";
 
-import { useDispatch } from "react-redux";
-import { setCredentials } from "@/features/auth/authSlice";
-import { useNavigate } from "react-router-dom";
-import Cookies from "js-cookie";
-
-const schema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-export default function Login() {
+const Login: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const [login] = useLoginMutation();
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    resolver: zodResolver(schema),
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [login, { isLoading }] = useLoginMutation();
 
-  const onSubmit = async (data: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      const res: any = await login(data).unwrap();
-      Cookies.set("token", res.token);
-      Cookies.set("role", res.role);
-      dispatch(setCredentials({ token: res.token, role: res.role }));
-      if (res.role === "sender") navigate("/sender");
-      else if (res.role === "receiver") navigate("/receiver");
-      else navigate("/admin");
-    } catch {
-      alert("Login failed");
+      const { token } = await login({ email, password }).unwrap();
+      localStorage.setItem("token", token);
+      navigate("/"); // redirect after login
+    } catch (err: any) {
+      alert(err.data?.message || err.message);
     }
   };
 
   return (
-    <>
-      <Navbar />
-      <Container className="py-12 max-w-md">
-        <Card>
-          <CardContent>
-            <h1 className="text-2xl font-bold mb-4">Login</h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div>
-                <Input placeholder="Email" {...register("email")} />
-                {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-              </div>
-              <div>
-                <Input type="password" placeholder="Password" {...register("password")} />
-                {errors.password && <p className="text-red-500">{errors.password.message}</p>}
-              </div>
-              <Button type="submit">Login</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </Container>
-      <Footer />
-    </>
+    <div className="max-w-md mx-auto mt-16">
+      <div className="bg-white p-6 rounded shadow-md">
+        <h2 className="text-2xl font-bold mb-4">Login</h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block font-medium">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className={cn("w-full border p-2 rounded")}
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={cn("w-full border p-2 rounded")}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+          >
+            {isLoading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <p className="mt-4 text-center text-sm">
+          Don't have an account?{" "}
+          <Link to="/register" className="text-blue-600 hover:underline">
+            Register
+          </Link>
+        </p>
+
+        <button
+          onClick={() => navigate("/")}
+          className="mt-4 text-blue-600 hover:underline"
+        >
+          &larr; Back to Home
+        </button>
+      </div>
+    </div>
   );
-}
+};
+
+export default Login;

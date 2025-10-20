@@ -14,18 +14,22 @@ import AdminLayout from "./layouts/AdminLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
+import PublicLayout from "./layouts/PublicLayout";
 
 export default function App() {
   // ✅ Access environment variables here
   const apiUrl = import.meta.env.VITE_API_URL;
   console.log("API URL:", apiUrl); // Example: log it for debugging
 
-  return (
+ return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+        <Route element={<PublicLayout />}>
+    <Route path="/" element={<Landing />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+  </Route>
 
+      {/* Sender Routes */}
       <Route
         path="/sender/*"
         element={
@@ -40,6 +44,7 @@ export default function App() {
         }
       />
 
+      {/* Receiver Routes */}
       <Route
         path="/receiver/*"
         element={
@@ -53,6 +58,7 @@ export default function App() {
         }
       />
 
+      {/* Admin Routes */}
       <Route
         path="/admin/*"
         element={
@@ -65,7 +71,6 @@ export default function App() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<AdminUserManagementPage />} />
-        {/* Add admin parcel management route later */}
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

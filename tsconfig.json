@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "jsx": "react-jsx",
@@ -15,8 +16,10 @@
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
     "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] }
+   "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": ["src"]
 }

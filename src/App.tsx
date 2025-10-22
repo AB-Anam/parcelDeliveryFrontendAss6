@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Landing from "./pages/public/Landing";
 import Login from "./pages/public/Login";
 import Register from "./pages/public/Register";
+import TrackParcel from "./pages/public/TrackParcel";
 
 import SenderDashboard from "./pages/sender/SenderDashboard";
 import ReceiverDashboard from "./pages/receiver/ReceiverDashboard";
@@ -23,11 +24,13 @@ export default function App() {
 
  return (
     <Routes>
-        <Route element={<PublicLayout />}>
-    <Route path="/" element={<Landing />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-  </Route>
+       <Route element={<PublicLayout />}>
+  <Route path="/" element={<Landing />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
+  <Route path="/track" element={<TrackParcel />} /> {/* ✅ new page */}
+</Route>
+
 
       {/* Sender Routes */}
       <Route

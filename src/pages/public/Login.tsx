@@ -1,23 +1,50 @@
-// src/pages/public/Login.tsx
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { useLoginMutation } from "@/services/apiSlice"; // make sure your apiSlice has this mutation
-import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from "@/services/apiSlice";
+
+// Match your backend response exactly
+interface LoginResponse {
+  success: boolean;
+  token: {
+    token: string;
+    user: {
+      id: string;
+      email: string;
+      role: "sender" | "receiver" | "admin";
+    };
+  };
+}
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [login, { isLoading }] = useLoginMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     try {
-      const { token } = await login({ email, password }).unwrap();
-      localStorage.setItem("token", token);
-      navigate("/"); // redirect after login
+      // Treat response as unknown first, then cast
+      const response = (await login({ email, password }).unwrap()) as unknown as LoginResponse;
+
+      if (!response.success) {
+        alert("Login failed");
+        return;
+      }
+
+      // Save JWT token
+      localStorage.setItem("token", response.token.token);
+
+      // Redirect based on role
+      const role = response.token.user.role;
+      if (role === "sender") navigate("/sender");
+      else if (role === "receiver") navigate("/receiver");
+      else if (role === "admin") navigate("/admin");
+      else navigate("/"); // fallback
     } catch (err: any) {
-      alert(err.data?.message || err.message);
+      alert(err.data?.message || err.message || "Login failed");
     }
   };
 
@@ -25,7 +52,6 @@ const Login: React.FC = () => {
     <div className="max-w-md mx-auto mt-16">
       <div className="bg-white p-6 rounded shadow-md">
         <h2 className="text-2xl font-bold mb-4">Login</h2>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block font-medium">Email</label>
@@ -34,10 +60,9 @@ const Login: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={cn("w-full border p-2 rounded")}
+              className="w-full border p-2 rounded"
             />
           </div>
-
           <div>
             <label className="block font-medium">Password</label>
             <input
@@ -45,10 +70,9 @@ const Login: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className={cn("w-full border p-2 rounded")}
+              className="w-full border p-2 rounded"
             />
           </div>
-
           <button
             type="submit"
             disabled={isLoading}
@@ -57,20 +81,6 @@ const Login: React.FC = () => {
             {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-sm">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register
-          </Link>
-        </p>
-
-        <button
-          onClick={() => navigate("/")}
-          className="mt-4 text-blue-600 hover:underline"
-        >
-          &larr; Back to Home
-        </button>
       </div>
     </div>
   );

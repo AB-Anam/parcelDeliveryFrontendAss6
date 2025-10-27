@@ -18,64 +18,45 @@ import RoleRoute from "./components/RoleRoute";
 import PublicLayout from "./layouts/PublicLayout";
 
 export default function App() {
-  // ✅ Access environment variables here
   const apiUrl = import.meta.env.VITE_API_URL;
-  console.log("API URL:", apiUrl); // Example: log it for debugging
+  console.log("API URL:", apiUrl);
 
- return (
+  return (
     <Routes>
-       <Route element={<PublicLayout />}>
-  <Route path="/" element={<Landing />} />
-  <Route path="/login" element={<Login />} />
-  <Route path="/register" element={<Register />} />
-  <Route path="/track" element={<TrackParcel />} /> {/* ✅ new page */}
+      {/* 🌐 Public Routes */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/track" element={<TrackParcel />} />
+      </Route>
+
+{/* Sender Routes */}
+<Route element={<ProtectedRoute />}>
+  <Route element={<RoleRoute role="sender" />}>
+    <Route path="/sender" element={<SenderDashboard />} />
+    <Route path="/sender/create" element={<CreateParcelPage />} />
+  </Route>
+</Route>
+
+{/* Receiver Routes */}
+<Route element={<ProtectedRoute />}>
+  <Route element={<RoleRoute role="receiver" />}>
+    <Route path="/receiver" element={<ReceiverDashboard />} />
+  </Route>
+</Route>
+
+{/* Admin Routes */}
+<Route element={<ProtectedRoute />}>
+  <Route element={<RoleRoute role="admin" />}>
+    <Route path="/admin" element={<AdminDashboard />} />
+    <Route path="/admin/users" element={<AdminUserManagementPage />} />
+  </Route>
 </Route>
 
 
-      {/* Sender Routes */}
-      <Route
-        path="/sender/*"
-        element={
-          <ProtectedRoute>
-            <RoleRoute role="sender">
-              <Routes>
-                <Route index element={<SenderDashboard />} />
-                <Route path="create" element={<CreateParcelPage />} />
-              </Routes>
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
 
-      {/* Receiver Routes */}
-      <Route
-        path="/receiver/*"
-        element={
-          <ProtectedRoute>
-            <RoleRoute role="receiver">
-              <Routes>
-                <Route index element={<ReceiverDashboard />} />
-              </Routes>
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Admin Routes */}
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute>
-            <RoleRoute role="admin">
-              <AdminLayout />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminDashboard />} />
-        <Route path="users" element={<AdminUserManagementPage />} />
-      </Route>
-
+      {/* 🚫 Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

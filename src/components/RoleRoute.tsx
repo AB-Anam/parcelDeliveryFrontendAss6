@@ -1,14 +1,18 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
-import type { RootState } from "../app/store";
+import { Navigate, Outlet } from "react-router-dom";
 
-const RoleRoute: React.FC<{ role: string | string[]; children: React.ReactNode }> = ({ role, children }) => {
-  const currentRole = useSelector((state: RootState) => state.auth.role);
-  if (!currentRole) return <Navigate to="/login" replace />;
-  const allowed = Array.isArray(role) ? role.includes(currentRole) : currentRole === role;
-  if (!allowed) return <Navigate to="/" replace />;
-  return <>{children}</>;
+interface RoleRouteProps {
+  role: "sender" | "receiver" | "admin";
+}
+
+const RoleRoute = ({ role }: RoleRouteProps) => {
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+
+  if (!user || user.role !== role) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default RoleRoute;

@@ -29,17 +29,19 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Auth"],
     }),
-    login: builder.mutation<
-      { user: IUser; token: string },
-      { email: string; password: string }
-    >({
-      query: (payload) => ({
-        url: "/auth/login",
-        method: "POST",
-        body: payload,
-      }),
-      invalidatesTags: ["Auth"],
-    }),
+    // Inside endpoints: (builder) => ({
+login: builder.mutation<
+  { success: boolean; token: { token: string; user: any } },
+  { email: string; password: string }
+>({
+  query: (payload) => ({
+    url: "/auth/login",
+    method: "POST",
+    body: payload,
+  }),
+  invalidatesTags: ["Auth"],
+}),
+
 
     // ===== User Endpoints =====
     getUsers: builder.query<IUser[], void>({
@@ -60,6 +62,11 @@ export const apiSlice = createApi({
     }),
 
     // ===== Parcel Endpoints =====
+    getSenderParcels: builder.query<IParcel[], void>({
+  query: () => "/parcels/sender",
+  transformResponse: (response: { success: boolean; data: IParcel[] }) => response.data,
+}),
+
     getMyParcels: builder.query<IParcel[], void>({
       query: () => "/parcels/me",
       providesTags: ["Parcel"],

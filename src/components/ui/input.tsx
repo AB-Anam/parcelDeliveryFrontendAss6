@@ -1,11 +1,24 @@
-// src/components/ui/input.tsx
-import * as React from "react";
+// src/components/ui/Input.tsx
+import React from "react";
 
-export const Input = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->((props, ref) => {
-  return <input ref={ref} {...props} className="border rounded px-3 py-2 w-full" />;
-});
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+}
 
-Input.displayName = "Input";
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ label, ...props }, ref) => {
+    return (
+      <div className="flex flex-col">
+        {label && <label className="mb-1 font-medium">{label}</label>}
+        <input
+          ref={ref}
+          {...props}
+          className="border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input"; // for dev tools
+export default Input;

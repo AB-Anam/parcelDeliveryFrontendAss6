@@ -5,7 +5,10 @@ import { Button } from "@/components/ui/button";
 
 export default function SenderDashboard() {
   const navigate = useNavigate();
-  const { data: parcels = [], isLoading } = useGetMyParcelsQuery();
+  const { data, isLoading } = useGetMyParcelsQuery();
+
+  // Ensure parcels is always an array
+  const parcels = Array.isArray(data) ? data : [];
 
   if (isLoading) return <p className="text-center py-6">Loading parcels...</p>;
 
@@ -28,9 +31,11 @@ export default function SenderDashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {parcels.map((parcel) => (
-            <Card key={parcel._id} className="shadow-md">
+            <Card key={parcel._id ?? parcel.trackingId} className="shadow-md">
               <CardContent className="p-4 space-y-2">
-                <h2 className="text-lg font-semibold">Tracking ID: {parcel.trackingId}</h2>
+                <h2 className="text-lg font-semibold">
+                  Tracking ID: {parcel.trackingId}
+                </h2>
                 <p>Status: <strong>{parcel.status}</strong></p>
                 <p>Type: {parcel.type}</p>
                 <p>Weight: {parcel.weight} kg</p>

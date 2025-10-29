@@ -16,6 +16,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 import PublicLayout from "./layouts/PublicLayout";
+import SenderLayout from "./layouts/SenderLayout";
 
 export default function App() {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -34,8 +35,10 @@ export default function App() {
 {/* Sender Routes */}
 <Route element={<ProtectedRoute />}>
   <Route element={<RoleRoute role="sender" />}>
-    <Route path="/sender" element={<SenderDashboard />} />
-    <Route path="/sender/create" element={<CreateParcelPage />} />
+    <Route element={<SenderLayout />}>
+      <Route path="/sender" element={<SenderDashboard />} />
+      <Route path="/sender/create" element={<CreateParcelPage />} />
+    </Route>
   </Route>
 </Route>
 

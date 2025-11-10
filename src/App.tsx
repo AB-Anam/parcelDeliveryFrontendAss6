@@ -12,6 +12,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import CreateParcelPage from "./features/parcels/CreateParcelPage";
 import AdminUserManagementPage from "./features/users/AdminUserManagementPage";
 import AdminLayout from "./layouts/AdminLayout";
+import ReceiverLayout from "./layouts/AdminLayout";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
@@ -44,17 +45,17 @@ export default function App() {
 
 {/* Receiver Routes */}
 <Route element={<ProtectedRoute />}>
-  <Route element={<RoleRoute role="receiver" />}>
-    <Route path="/receiver" element={<ReceiverDashboard />} />
-  </Route>
+     <Route element={<ReceiverLayout />}>
+      <Route path="/receiver" element={<ReceiverDashboard />} />
+    </Route>
 </Route>
 
 {/* Admin Routes */}
 <Route element={<ProtectedRoute />}>
-  <Route element={<RoleRoute role="admin" />}>
-    <Route path="/admin" element={<AdminDashboard />} />
-    <Route path="/admin/users" element={<AdminUserManagementPage />} />
-  </Route>
+   <Route element={<AdminLayout />}>
+      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/users" element={<AdminUserManagementPage />} />
+    </Route>
 </Route>
 
 

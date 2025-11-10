@@ -1,57 +1,65 @@
 // src/features/parcels/CreateParcelPage.tsx
-import React, { useState } from "react";
-import { useCreateParcelMutation } from "@/services/apiSlice";
-import { Card, CardContent, Button, Input } from "@/components/ui";
-import { toast } from "sonner"; // ✅ shadcn/ui toast
-import { cn } from "@/lib/utils";
-
-// ✅ Local helper components (replace missing imports)
-const Container = ({ children }: { children: React.ReactNode }) => (
-  <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
-);
-
-const Label = (props: React.LabelHTMLAttributes<HTMLLabelElement>) => (
-  <label className="block text-sm font-medium text-gray-700 mb-1" {...props} />
-);
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useGetUsersQuery, useCreateParcelMutation } from "@/services/apiSlice";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "react-hot-toast";
 
 export default function CreateParcelPage() {
+  const navigate = useNavigate();
+  const { data: users = [] } = useGetUsersQuery();
+  const [createParcel, { isLoading }] = useCreateParcelMutation();
+
+  const receivers = users.filter((u) => u.role === "receiver");
+
   const [formData, setFormData] = useState({
     type: "",
     weight: "",
+    receiverId: "",
     pickupAddress: "",
     deliveryAddress: "",
   });
 
-  const [createParcel, { isLoading }] = useCreateParcelMutation();
-
-  // ✅ Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!formData.receiverId) {
+        toast.error("Please select a receiver");
+        return;
+      }
+
       const payload = {
         type: formData.type,
         weight: Number(formData.weight),
+        receiverId: formData.receiverId,
         pickupAddress: formData.pickupAddress,
         deliveryAddress: formData.deliveryAddress,
       };
+
+      console.log("🚀 Sending parcel payload:", payload);
 
       const response = await createParcel(payload).unwrap();
 
       toast.success("✅ Parcel created successfully!");
       console.log("Created parcel:", response);
 
-      // Reset form
       setFormData({
         type: "",
         weight: "",
+        receiverId: "",
         pickupAddress: "",
         deliveryAddress: "",
       });
+
+      navigate("/sender");
     } catch (err: any) {
       console.error("❌ Error creating parcel:", err);
       toast.error(err?.data?.message || "Failed to create parcel");
@@ -59,88 +67,80 @@ export default function CreateParcelPage() {
   };
 
   return (
-    <Container>
-      <Card className="mt-10 shadow-md border border-gray-200">
-        <CardContent className="p-6 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800 text-center">
-            Create a New Parcel
-          </h1>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Type */}
+    <div className="p-8 max-w-2xl mx-auto">
+      <Card className="shadow-md">
+        <CardContent className="p-6 space-y-4">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">📦 Create New Parcel</h1>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="type">Parcel Type</Label>
-              <Input
-                id="type"
-                name="type"
-                placeholder="e.g. Documents, Electronics"
-                value={formData.type}
-                onChange={handleChange}
-                required
-                className="w-full"
-              />
+              <Label>Parcel Type</Label>
+              <Input name="type" value={formData.type} onChange={handleChange} required />
             </div>
 
-            {/* Weight */}
             <div>
-              <Label htmlFor="weight">Weight (kg)</Label>
+              <Label>Weight (kg)</Label>
               <Input
-                id="weight"
-                name="weight"
                 type="number"
-                step="0.01"
-                placeholder="e.g. 2.5"
+                name="weight"
                 value={formData.weight}
                 onChange={handleChange}
                 required
-                className="w-full"
               />
             </div>
 
-            {/* Pickup Address */}
             <div>
-              <Label htmlFor="pickupAddress">Pickup Address</Label>
+              <Label>Receiver</Label>
+              <select
+                name="receiverId"
+                value={formData.receiverId}
+                onChange={handleChange}
+                required
+                className="w-full border rounded-md p-2"
+              >
+                <option value="">Select Receiver</option>
+                {receivers.map((receiver) => (
+                  <option key={receiver._id} value={receiver._id}>
+                    {receiver.name} ({receiver.email})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label>Pickup Address</Label>
               <Input
-                id="pickupAddress"
                 name="pickupAddress"
-                placeholder="Enter pickup address"
                 value={formData.pickupAddress}
                 onChange={handleChange}
                 required
-                className="w-full"
               />
             </div>
 
-            {/* Delivery Address */}
             <div>
-              <Label htmlFor="deliveryAddress">Delivery Address</Label>
+              <Label>Delivery Address</Label>
               <Input
-                id="deliveryAddress"
                 name="deliveryAddress"
-                placeholder="Enter delivery address"
                 value={formData.deliveryAddress}
                 onChange={handleChange}
                 required
-                className="w-full"
               />
             </div>
 
-            {/* Submit Button */}
-            <div className="text-center pt-4">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className={cn(
-                  "bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition",
-                  isLoading && "opacity-70 cursor-not-allowed"
-                )}
-              >
-                {isLoading ? "Creating..." : "Create Parcel"}
-              </Button>
-            </div>
+            <Button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white">
+              {isLoading ? "Creating..." : "Create Parcel"}
+            </Button>
           </form>
+
+          <Button
+            onClick={() => navigate("/sender")}
+            variant="outline"
+            className="w-full mt-4"
+          >
+            ⬅ Back to Dashboard
+          </Button>
         </CardContent>
       </Card>
-    </Container>
+    </div>
   );
 }
+

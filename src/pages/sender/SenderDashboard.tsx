@@ -1,14 +1,42 @@
+// src/pages/SenderDashboard.tsx
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetMyParcelsQuery } from "@/services/apiSlice";
+import { toast } from "react-hot-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Input from "@/components/ui/input";
+import { useGetMyParcelsQuery, useDeliverParcelMutation } from "@/services/apiSlice";
 
 export default function SenderDashboard() {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetMyParcelsQuery();
+  const { data, isLoading, refetch } = useGetMyParcelsQuery();
+  const [deliverParcel] = useDeliverParcelMutation();
+  const [receiverInputs, setReceiverInputs] = useState<Record<string, string>>({});
 
   // Ensure parcels is always an array
   const parcels = Array.isArray(data) ? data : [];
+
+  const handleReceiverChange = (parcelId: string, value: string) => {
+    setReceiverInputs({ ...receiverInputs, [parcelId]: value });
+  };
+
+  const handleDeliver = async (parcelId: string) => {
+    const receiverId = receiverInputs[parcelId];
+    if (!receiverId) {
+      toast.error("Please enter a receiver ID");
+      return;
+    }
+
+    try {
+      await deliverParcel({ parcelId, receiverId }).unwrap();
+      toast.success("🚚 Parcel assigned to receiver!");
+      setReceiverInputs({ ...receiverInputs, [parcelId]: "" });
+      refetch(); // Refresh parcel list
+    } catch (err: any) {
+      console.error("❌ Error delivering parcel:", err);
+      toast.error(err?.data?.message || "Failed to deliver parcel");
+    }
+  };
 
   if (isLoading) return <p className="text-center py-6">Loading parcels...</p>;
 
@@ -33,14 +61,29 @@ export default function SenderDashboard() {
           {parcels.map((parcel) => (
             <Card key={parcel._id ?? parcel.trackingId} className="shadow-md">
               <CardContent className="p-4 space-y-2">
-                <h2 className="text-lg font-semibold">
-                  Tracking ID: {parcel.trackingId}
-                </h2>
+                <h2 className="text-lg font-semibold">Tracking ID: {parcel.trackingId}</h2>
                 <p>Status: <strong>{parcel.status}</strong></p>
                 <p>Type: {parcel.type}</p>
                 <p>Weight: {parcel.weight} kg</p>
                 <p>Pickup: {parcel.pickupAddress}</p>
                 <p>Delivery: {parcel.deliveryAddress}</p>
+                {parcel.receiverId ? (
+                  <p>Receiver ID: {parcel.receiverId}</p>
+                ) : (
+                  <div className="space-y-2 mt-2">
+                    <Input
+                      placeholder="Enter Receiver ID"
+                      value={receiverInputs[parcel._id ?? ""] || ""}
+                      onChange={(e) => handleReceiverChange(parcel._id ?? "", e.target.value)}
+                    />
+                    <Button
+                      onClick={() => handleDeliver(parcel._id ?? "")}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      🚚 Deliver Parcel
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

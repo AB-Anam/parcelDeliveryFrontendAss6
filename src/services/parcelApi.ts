@@ -1,5 +1,6 @@
-import { apiSlice } from "./apiSlice";
+//src/services/parcelApi.ts
 
+import { apiSlice } from "./apiSlice";
 export interface Parcel {
   _id: string;
   type: string;

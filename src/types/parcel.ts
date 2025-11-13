@@ -10,16 +10,22 @@ export interface IStatusLog {
 
 
 export interface IParcel {
-  _id: string;
+  _id?: string;
   type: string;
   weight: number;
-  senderId: IUser | string;    // populated User or string id
-  receiverId: IUser | string;  // populated
+  senderId?: string;
+  receiverId?: string;
   pickupAddress: string;
   deliveryAddress: string;
+  fee?: number;              // ✅ Add this
   status: string;
   trackingId: string;
-  trackingEvents: IStatusLog[];
-  createdAt: string;
-  updatedAt: string;
+  trackingEvents?: {
+    status: string;
+    timestamp: string;
+    updatedBy?: string;
+    note?: string;
+  }[];
+  createdAt?: string;
+  updatedAt?: string;
 }

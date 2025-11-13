@@ -1,4 +1,3 @@
-// src/services/apiSlice.ts
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { IUser } from "@/types/user";
 import { IParcel } from "@/types/parcel";
@@ -29,19 +28,18 @@ export const apiSlice = createApi({
       }),
       invalidatesTags: ["Auth"],
     }),
-    // Inside endpoints: (builder) => ({
-login: builder.mutation<
-  { success: boolean; token: { token: string; user: any } },
-  { email: string; password: string }
->({
-  query: (payload) => ({
-    url: "/auth/login",
-    method: "POST",
-    body: payload,
-  }),
-  invalidatesTags: ["Auth"],
-}),
 
+    login: builder.mutation<
+      { success: boolean; token: { token: string; user: any } },
+      { email: string; password: string }
+    >({
+      query: (payload) => ({
+        url: "/auth/login",
+        method: "POST",
+        body: payload,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
 
     // ===== User Endpoints =====
     getUsers: builder.query<IUser[], void>({
@@ -63,14 +61,16 @@ login: builder.mutation<
 
     // ===== Parcel Endpoints =====
     getSenderParcels: builder.query<IParcel[], void>({
-  query: () => "/parcels/sender",
-  transformResponse: (response: { success: boolean; data: IParcel[] }) => response.data,
-}),
+      query: () => "/parcels/sender",
+      transformResponse: (response: { success: boolean; data: IParcel[] }) =>
+        response.data,
+    }),
 
     getMyParcels: builder.query<IParcel[], void>({
       query: () => "/parcels/me",
       providesTags: ["Parcel"],
     }),
+
     createParcel: builder.mutation<IParcel, Partial<IParcel>>({
       query: (parcel) => ({
         url: "/parcels",
@@ -79,6 +79,18 @@ login: builder.mutation<
       }),
       invalidatesTags: ["Parcel"],
     }),
+
+    // 🚚 NEW: Deliver Parcel (assign receiver)
+deliverParcel: builder.mutation<IParcel, { parcelId: string; receiverId: string }>({
+  query: ({ parcelId, receiverId }) => ({
+    url: `/parcels/deliver`,
+    method: "PATCH",
+    body: { parcelId, receiverId },
+  }),
+  invalidatesTags: ["Parcel"],
+}),
+
+
     cancelParcel: builder.mutation<IParcel, string>({
       query: (id) => ({
         url: `/parcels/cancel/${id}`,
@@ -86,6 +98,7 @@ login: builder.mutation<
       }),
       invalidatesTags: ["Parcel"],
     }),
+
     confirmDelivery: builder.mutation<IParcel, string>({
       query: (id) => ({
         url: `/parcels/confirm/${id}`,
@@ -93,18 +106,22 @@ login: builder.mutation<
       }),
       invalidatesTags: ["Parcel"],
     }),
+
     getParcelHistory: builder.query<IParcel, string>({
       query: (id) => `/parcels/history/${id}`,
       providesTags: ["Parcel"],
     }),
+
     trackParcel: builder.query<IParcel, string>({
       query: (trackingId) => `/parcels/track/${trackingId}`,
       providesTags: ["Parcel"],
     }),
+
     getAllParcels: builder.query<IParcel[], void>({
       query: () => "/parcels",
       providesTags: ["Parcel"],
     }),
+
     updateParcelStatus: builder.mutation<
       IParcel,
       { id: string; status: string; note?: string }
@@ -116,6 +133,9 @@ login: builder.mutation<
       }),
       invalidatesTags: ["Parcel"],
     }),
+
+    
+
     blockParcel: builder.mutation<IParcel, { id: string; blocked: boolean }>({
       query: ({ id, blocked }) => ({
         url: `/parcels/block/${id}`,
@@ -141,6 +161,7 @@ export const {
   // Parcel
   useGetMyParcelsQuery,
   useCreateParcelMutation,
+  useDeliverParcelMutation,   // ✅ Added here
   useCancelParcelMutation,
   useConfirmDeliveryMutation,
   useGetParcelHistoryQuery,

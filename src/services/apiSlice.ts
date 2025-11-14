@@ -81,7 +81,10 @@ export const apiSlice = createApi({
     }),
 
     // 🚚 NEW: Deliver Parcel (assign receiver)
-deliverParcel: builder.mutation<IParcel, { parcelId: string; receiverId: string }>({
+deliverParcel: builder.mutation<
+  IParcel,
+  { parcelId: string; receiverId: string }
+>({
   query: ({ parcelId, receiverId }) => ({
     url: `/parcels/deliver`,
     method: "PATCH",
@@ -169,4 +172,5 @@ export const {
   useGetAllParcelsQuery,
   useUpdateParcelStatusMutation,
   useBlockParcelMutation,
+  
 } = apiSlice;

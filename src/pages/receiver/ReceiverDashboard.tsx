@@ -1,48 +1,51 @@
-// src/pages/receiver/ReceiverDashboard.tsx
-import React from "react";
-import { useGetMyParcelsQuery } from "@/services/parcelApiSlice";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useGetMyParcelsQuery, useConfirmDeliveryMutation } from "@/services/apiSlice";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-const statusColorMap: Record<string, string> = {
-  Requested: "bg-yellow-100 text-yellow-800",
-  Approved: "bg-blue-100 text-blue-800",
-  Dispatched: "bg-purple-100 text-purple-800",
-  "In Transit": "bg-orange-100 text-orange-800",
-  Delivered: "bg-green-100 text-green-800",
-  Canceled: "bg-red-100 text-red-800",
-  Blocked: "bg-gray-100 text-gray-800",
-};
+export default function ReceiverDashboard() {
+  const { data, isLoading } = useGetMyParcelsQuery();
+  const [confirmDelivery] = useConfirmDeliveryMutation();
 
-export const ReceiverDashboard: React.FC = () => {
-  const { data: parcels, isLoading, isError } = useGetMyParcelsQuery();
+  const parcels = Array.isArray(data) ? data : [];
 
-  if (isLoading) return <div className="text-center mt-20">Loading parcels...</div>;
-  if (isError) return <div className="text-center mt-20 text-red-500">Failed to load parcels.</div>;
-  if (!parcels || parcels.length === 0) return <div className="text-center mt-20">No parcels assigned to you.</div>;
+  const handleConfirm = (parcelId: string) => {
+    confirmDelivery(parcelId);
+  };
+
+  if (isLoading) return <p className="text-center py-6">Loading parcels...</p>;
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-2xl font-bold">My Parcels</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {parcels.map((parcel) => (
-          <Card key={parcel._id} className="p-4 hover:shadow-lg transition-shadow">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="font-semibold">{parcel.trackingId}</h2>
-              <Badge className={cn(statusColorMap[parcel.status] || "bg-gray-100 text-gray-800")}>
-                {parcel.status}
-              </Badge>
-            </div>
-            <p><span className="font-medium">Type:</span> {parcel.type}</p>
-            <p><span className="font-medium">Weight:</span> {parcel.weight} kg</p>
-            <p><span className="font-medium">Pickup:</span> {parcel.pickupAddress}</p>
-            <p><span className="font-medium">Delivery:</span> {parcel.deliveryAddress}</p>
-          </Card>
-        ))}
-      </div>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold mb-6">📦 Parcels Assigned to Me</h1>
+      {parcels.length === 0 ? (
+        <p className="text-center text-gray-500 mt-10">No parcels assigned yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {parcels.map((parcel) => (
+            <Card key={parcel._id ?? parcel.trackingId} className="shadow-md">
+              <CardContent className="p-4 space-y-2">
+                <h2 className="text-lg font-semibold">
+                  Tracking ID: {parcel.trackingId}
+                </h2>
+                <p>Status: <strong>{parcel.status}</strong></p>
+                <p>Type: {parcel.type}</p>
+                <p>Weight: {parcel.weight} kg</p>
+                <p>Pickup: {parcel.pickupAddress}</p>
+                <p>Delivery: {parcel.deliveryAddress}</p>
+
+                {parcel.status === "In Transit" && parcel._id && (
+                  <Button
+                    onClick={() => handleConfirm(parcel._id!)}
+                    className="bg-green-600 hover:bg-green-700 text-white mt-2"
+                  >
+                    ✅ Confirm Delivery
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
-};
-
-export default ReceiverDashboard;
+}

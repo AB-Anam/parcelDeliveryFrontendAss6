@@ -1,76 +1,64 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCreateParcelMutation } from "@/services/apiSlice";
-import Input  from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateParcelPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    type: "",
-    weight: "",
-    pickupAddress: "",
-    deliveryAddress: "",
-  });
-
+  const [formData, setFormData] = useState({ type: "", weight: "" , pickupAddress: "", deliveryAddress: "" });
   const [createParcel] = useCreateParcelMutation();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await createParcel({
-        ...formData,
+        type: formData.type,
         weight: Number(formData.weight),
+        pickupAddress: formData.pickupAddress,
+        deliveryAddress: formData.deliveryAddress,
       }).unwrap();
-      toast.success("✅ Parcel created successfully!");
-      navigate("/sender/dashboard");
+      alert("Parcel created successfully!");
+      navigate("/sender");
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to create parcel");
-      console.error(err);
+      alert(err?.data?.message || "Failed to create parcel");
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto p-6">
+    <div className="p-8 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-4">Create Parcel</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          name="type"
+        <input
           placeholder="Parcel Type"
           value={formData.type}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+          className="border p-2 w-full"
           required
         />
-        <Input
-          name="weight"
-          type="number"
+        <input
           placeholder="Weight (kg)"
+          type="number"
           value={formData.weight}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+          className="border p-2 w-full"
           required
         />
-        <Input
-          name="pickupAddress"
+        <input
           placeholder="Pickup Address"
           value={formData.pickupAddress}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, pickupAddress: e.target.value })}
+          className="border p-2 w-full"
           required
         />
-        <Input
-          name="deliveryAddress"
+        <input
           placeholder="Delivery Address"
           value={formData.deliveryAddress}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+          className="border p-2 w-full"
           required
         />
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
           Create Parcel
-        </Button>
+        </button>
       </form>
     </div>
   );

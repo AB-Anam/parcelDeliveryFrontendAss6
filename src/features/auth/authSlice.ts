@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Cookies from "js-cookie";
 
-interface IUser {
+export interface User {
   _id: string;
   name: string;
   email: string;
@@ -12,7 +12,7 @@ interface IUser {
 interface AuthState {
   token: string | null;
   role: string | null;
-  user: IUser | null; // <-- add user here
+  user: User | null;
 }
 
 const initialState: AuthState = {
@@ -25,20 +25,19 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (
-      state,
-      action: PayloadAction<{ token: string; role: string; user: IUser }>
-    ) => {
+    setCredentials: (state, action: PayloadAction<{ token: string; role: string; user: User }>) => {
       state.token = action.payload.token;
       state.role = action.payload.role;
-      state.user = action.payload.user; // <-- store user
+      state.user = action.payload.user;
+
       Cookies.set("token", action.payload.token, { expires: 7 });
       Cookies.set("role", action.payload.role, { expires: 7 });
     },
     clearCredentials: (state) => {
       state.token = null;
       state.role = null;
-      state.user = null; // <-- clear user
+      state.user = null;
+
       Cookies.remove("token");
       Cookies.remove("role");
     },

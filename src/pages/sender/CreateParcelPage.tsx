@@ -1,3 +1,4 @@
+// src/pages/sender/CreateParcelPage.tsx
 import { useState } from "react";
 import { useCreateParcelMutation } from "@/services/parcelApiSlice";
 import { useNavigate } from "react-router-dom";
@@ -9,8 +10,7 @@ export default function CreateParcelPage() {
     pickupAddress: "",
     deliveryAddress: "",
   });
-
-  const [createParcel, { isLoading }] = useCreateParcelMutation();
+  const [createParcel] = useCreateParcelMutation();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -21,10 +21,11 @@ export default function CreateParcelPage() {
         weight: Number(formData.weight),
         pickupAddress: formData.pickupAddress,
         deliveryAddress: formData.deliveryAddress,
-      }).unwrap(); // ✅ unwrap to catch errors
+        fee: 10, // Optional: Add default fee if needed
+      }).unwrap();
+
       alert("Parcel created successfully!");
-      navigate("/sender"); // back to dashboard
-      // No need to manually refresh, RTK Query re-fetches due to invalidatesTags
+      navigate("/sender"); // Navigate back to dashboard
     } catch (err: any) {
       alert(err?.data?.message || "Failed to create parcel");
     }
@@ -52,23 +53,26 @@ export default function CreateParcelPage() {
         <input
           placeholder="Pickup Address"
           value={formData.pickupAddress}
-          onChange={(e) => setFormData({ ...formData, pickupAddress: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, pickupAddress: e.target.value })
+          }
           className="border p-2 w-full"
           required
         />
         <input
           placeholder="Delivery Address"
           value={formData.deliveryAddress}
-          onChange={(e) => setFormData({ ...formData, deliveryAddress: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, deliveryAddress: e.target.value })
+          }
           className="border p-2 w-full"
           required
         />
         <button
           type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-          disabled={isLoading}
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
-          {isLoading ? "Creating..." : "Create Parcel"}
+          Create Parcel
         </button>
       </form>
     </div>

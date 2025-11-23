@@ -1,30 +1,27 @@
 // src/services/parcelApiSlice.ts
 import { apiSlice } from "./apiSlice";
+import { IParcel } from "@/types/parcel";
 
 export const parcelApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     /* -----------------------------------------
        📬 SENDER
     ------------------------------------------ */
-
-    // Get parcels for logged-in user (sender OR receiver)
-    getMyParcels: builder.query<any, void>({
+    getMyParcels: builder.query<IParcel[], void>({
       query: () => "/parcels/me",
       providesTags: ["Parcel"],
     }),
 
-    // Create parcel
-    createParcel: builder.mutation<any, any>({
+    createParcel: builder.mutation<IParcel, Partial<IParcel>>({
       query: (parcel) => ({
         url: "/parcels",
         method: "POST",
         body: parcel,
       }),
-      invalidatesTags: ["Parcel"],
+      invalidatesTags: ["Parcel"], // triggers dashboard refresh
     }),
 
-    // Assign receiver (deliver request)
-    deliverParcel: builder.mutation<any, { parcelId: string; receiverId: string }>({
+    deliverParcel: builder.mutation<IParcel, { parcelId: string; receiverId: string }>({
       query: (data) => ({
         url: "/parcels/deliver",
         method: "POST",
@@ -33,8 +30,7 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Parcel"],
     }),
 
-    // Cancel parcel
-    cancelParcel: builder.mutation<any, string>({
+    cancelParcel: builder.mutation<IParcel, string>({
       query: (id) => ({
         url: `/parcels/cancel/${id}`,
         method: "PATCH",
@@ -45,9 +41,7 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
     /* -----------------------------------------
        📥 RECEIVER
     ------------------------------------------ */
-
-    // Receiver confirms delivery
-    confirmDelivery: builder.mutation<any, string>({
+    confirmDelivery: builder.mutation<IParcel, string>({
       query: (id) => ({
         url: `/parcels/confirm/${id}`,
         method: "PATCH",
@@ -58,18 +52,12 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
     /* -----------------------------------------
        👑 ADMIN
     ------------------------------------------ */
-
-    // Admin: get ALL parcels
-    getAllParcels: builder.query<any, void>({
+    getAllParcels: builder.query<IParcel[], void>({
       query: () => "/parcels",
       providesTags: ["Parcel"],
     }),
 
-    // Admin: update parcel status
-    updateParcelStatus: builder.mutation<
-      any,
-      { id: string; status: string; note?: string }
-    >({
+    updateParcelStatus: builder.mutation<IParcel, { id: string; status: string; note?: string }>({
       query: ({ id, status, note }) => ({
         url: `/parcels/status/${id}`,
         method: "PATCH",
@@ -78,8 +66,7 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
       invalidatesTags: ["Parcel"],
     }),
 
-    // Admin: block or unblock parcel
-    toggleParcelBlock: builder.mutation<any, { id: string; blocked: boolean }>({
+    toggleParcelBlock: builder.mutation<IParcel, { id: string; blocked: boolean }>({
       query: ({ id, blocked }) => ({
         url: `/parcels/block/${id}`,
         method: "PATCH",
@@ -91,16 +78,14 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
     /* -----------------------------------------
        🌍 PUBLIC
     ------------------------------------------ */
-
-    trackParcel: builder.query<any, string>({
+    trackParcel: builder.query<IParcel, string>({
       query: (trackingId) => `/parcels/track/${trackingId}`,
     }),
 
     /* -----------------------------------------
        📜 HISTORY
     ------------------------------------------ */
-
-    getParcelHistory: builder.query<any, string>({
+    getParcelHistory: builder.query<IParcel, string>({
       query: (id) => `/parcels/history/${id}`,
     }),
   }),

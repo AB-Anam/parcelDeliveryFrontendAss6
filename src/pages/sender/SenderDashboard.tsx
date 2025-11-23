@@ -1,108 +1,75 @@
-// src/pages/SenderDashboard.tsx
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useGetMyParcelsQuery, useDeliverParcelMutation } from "@/services/parcelApiSlice";
-import { useGetUsersQuery } from "@/services/apiSlice";
+import React from "react";
+import { useGetMyParcelsQuery } from "@/services/parcelApiSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store";
 import { IParcel } from "@/types/parcel";
-import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
 
-export default function SenderDashboard() {
-  const navigate = useNavigate();
-  const { data } = useGetMyParcelsQuery();
-  const { data: receivers } = useGetUsersQuery();
-  const [deliverParcel] = useDeliverParcelMutation();
+const SenderDashboard = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
 
-  const parcels: IParcel[] = data ?? [];
+  const { data, isLoading, isError } = useGetMyParcelsQuery();
 
-  const [selectedParcel, setSelectedParcel] = useState<IParcel | null>(null);
-  const [selectedReceiver, setSelectedReceiver] = useState<string>("");
+  if (isLoading) return <p>Loading parcels...</p>;
+  if (isError) return <p>Failed to load parcels.</p>;
 
-  const openDeliverModal = (parcel: IParcel) => {
-    setSelectedParcel(parcel);
-    setSelectedReceiver("");
-  };
+  // ✅ Ensure parcels is always an array
+  const parcels: IParcel[] = Array.isArray(data?.parcels) ? data.parcels : [];
 
-  const handleDeliver = async () => {
-    if (!selectedParcel || !selectedReceiver) return;
-    try {
-      await deliverParcel({
-        parcelId: selectedParcel._id!,
-        receiverId: selectedReceiver,
-      }).unwrap();
-      toast.success("Parcel delivery initiated!");
-      setSelectedParcel(null);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to deliver parcel");
-    }
-  };
+  // Filter parcels created by the sender
+  const myParcels = parcels.filter((p) => p.senderId === user?._id);
+
+  // Stats
+  const pending = myParcels.filter((p) => p.status === "pending").length;
+  const onTheWay = myParcels.filter((p) => p.status === "in_transit").length;
+  const delivered = myParcels.filter((p) => p.status === "delivered").length;
+  const cancelled = myParcels.filter((p) => p.status === "cancelled").length;
+
+  const totalFees = myParcels.reduce((sum, p) => sum + (p.fee || 0), 0);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">📦 My Parcels</h1>
-        <Button
-          onClick={() => navigate("/sender/create")}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          ➕ Create Parcel
-        </Button>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">📦 Sender Dashboard</h1>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="p-4 bg-blue-100 rounded-lg">
+          <p className="text-sm text-gray-600">Pending</p>
+          <p className="text-xl font-bold">{pending}</p>
+        </div>
+        <div className="p-4 bg-yellow-100 rounded-lg">
+          <p className="text-sm text-gray-600">On The Way</p>
+          <p className="text-xl font-bold">{onTheWay}</p>
+        </div>
+        <div className="p-4 bg-green-100 rounded-lg">
+          <p className="text-sm text-gray-600">Delivered</p>
+          <p className="text-xl font-bold">{delivered}</p>
+        </div>
+        <div className="p-4 bg-red-100 rounded-lg">
+          <p className="text-sm text-gray-600">Cancelled</p>
+          <p className="text-xl font-bold">{cancelled}</p>
+        </div>
       </div>
 
-      {parcels.length === 0 ? (
-        <p className="text-center text-gray-500 mt-10">You have no parcels.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {parcels.map((parcel) => (
-            <div key={parcel._id} className="border rounded p-4 shadow-md space-y-2">
-              <h2 className="font-semibold">Tracking ID: {parcel.trackingId}</h2>
-              <p>Status: <strong>{parcel.status}</strong></p>
-              <p>Type: {parcel.type}</p>
-              <p>Weight: {parcel.weight} kg</p>
-              <p>Pickup: {parcel.pickupAddress}</p>
-              <p>Delivery: {parcel.deliveryAddress}</p>
+      {/* Total Fees */}
+      <div className="p-4 bg-purple-100 rounded-lg mb-6">
+        <p className="text-sm">Total Fees Paid</p>
+        <p className="text-xl font-bold">${totalFees}</p>
+      </div>
 
-              {parcel.status === "Requested" && (
-                <Button
-                  onClick={() => openDeliverModal(parcel)}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
-                >
-                  🚚 Deliver
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Simple Deliver Modal */}
-      {selectedParcel && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-md w-96">
-            <h2 className="text-lg font-bold mb-4">Assign Receiver</h2>
-            <select
-              className="w-full border rounded p-2 mb-4"
-              value={selectedReceiver}
-              onChange={(e) => setSelectedReceiver(e.target.value)}
-            >
-              <option value="">Select a receiver</option>
-              {receivers?.map((r: any) => (
-                <option key={r._id} value={r._id}>
-                  {r.name} ({r.email})
-                </option>
-              ))}
-            </select>
-            <div className="flex justify-end space-x-2">
-              <Button onClick={() => setSelectedParcel(null)} className="bg-gray-400 hover:bg-gray-500">
-                Cancel
-              </Button>
-              <Button onClick={handleDeliver} className="bg-green-600 hover:bg-green-700 text-white">
-                ✅ Assign & Send
-              </Button>
-            </div>
+      {/* Parcel List */}
+      <h2 className="text-lg font-semibold mb-2">Your Parcels</h2>
+      <div className="space-y-3">
+        {myParcels.map((parcel) => (
+          <div key={parcel._id} className="p-4 bg-white shadow rounded-lg">
+            <p><strong>Tracking ID:</strong> {parcel.trackingId}</p>
+            <p><strong>Type:</strong> {parcel.type}</p>
+            <p><strong>Status:</strong> {parcel.status}</p>
+            <p><strong>Receiver:</strong> {parcel.receiverId}</p>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
-}
+};
+
+export default SenderDashboard;

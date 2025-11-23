@@ -29,3 +29,14 @@ export interface IParcel {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// Lightweight parcel type for the dashboard
+export interface IDashboardParcel {
+  _id: string;
+  type: string;
+  weight: number;
+  status: string;
+  trackingId: string;
+  createdAt?: string;
+  blocked?: boolean;
+}

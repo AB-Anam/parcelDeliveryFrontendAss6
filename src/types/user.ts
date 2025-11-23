@@ -5,4 +5,5 @@ export interface IUser {
   email: string;
   role: "admin" | "sender" | "receiver";
   blocked?: boolean;
+  createdAt?: string; // Added for dashboard display
 }

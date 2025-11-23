@@ -1,15 +1,20 @@
 // src/services/parcelApiSlice.ts
 import { apiSlice } from "./apiSlice";
-import { IParcel } from "@/types/parcel";
 
 export const parcelApiSlice = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    // ===== Sender =====
-    getMyParcels: builder.query<IParcel[], void>({
+    /* -----------------------------------------
+       📬 SENDER
+    ------------------------------------------ */
+
+    // Get parcels for logged-in user (sender OR receiver)
+    getMyParcels: builder.query<any, void>({
       query: () => "/parcels/me",
       providesTags: ["Parcel"],
     }),
-    createParcel: builder.mutation<IParcel, Partial<IParcel>>({
+
+    // Create parcel
+    createParcel: builder.mutation<any, any>({
       query: (parcel) => ({
         url: "/parcels",
         method: "POST",
@@ -17,33 +22,54 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Parcel"],
     }),
-    cancelParcel: builder.mutation<IParcel, string>({
+
+    // Assign receiver (deliver request)
+    deliverParcel: builder.mutation<any, { parcelId: string; receiverId: string }>({
+      query: (data) => ({
+        url: "/parcels/deliver",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["Parcel"],
+    }),
+
+    // Cancel parcel
+    cancelParcel: builder.mutation<any, string>({
       query: (id) => ({
         url: `/parcels/cancel/${id}`,
         method: "PATCH",
       }),
       invalidatesTags: ["Parcel"],
     }),
-    deliverParcel: builder.mutation<IParcel, { parcelId: string; receiverId: string }>({
-      query: ({ parcelId, receiverId }) => ({
-        url: "/parcels/deliver",
-        method: "PATCH",
-        body: { parcelId, receiverId },
-      }),
-      invalidatesTags: ["Parcel"],
-    }),
 
-    // ===== Receiver =====
-    confirmDelivery: builder.mutation<IParcel, string>({
-      query: (parcelId) => ({
-        url: `/parcels/confirm/${parcelId}`,
+    /* -----------------------------------------
+       📥 RECEIVER
+    ------------------------------------------ */
+
+    // Receiver confirms delivery
+    confirmDelivery: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/parcels/confirm/${id}`,
         method: "PATCH",
       }),
       invalidatesTags: ["Parcel"],
     }),
 
-    // ===== Admin =====
-    approveParcel: builder.mutation<IParcel, { id: string; status: string; note?: string }>({
+    /* -----------------------------------------
+       👑 ADMIN
+    ------------------------------------------ */
+
+    // Admin: get ALL parcels
+    getAllParcels: builder.query<any, void>({
+      query: () => "/parcels",
+      providesTags: ["Parcel"],
+    }),
+
+    // Admin: update parcel status
+    updateParcelStatus: builder.mutation<
+      any,
+      { id: string; status: string; note?: string }
+    >({
       query: ({ id, status, note }) => ({
         url: `/parcels/status/${id}`,
         method: "PATCH",
@@ -51,32 +77,44 @@ export const parcelApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Parcel"],
     }),
-    getAllParcels: builder.query<IParcel[], void>({
-      query: () => "/parcels",
-      providesTags: ["Parcel"],
+
+    // Admin: block or unblock parcel
+    toggleParcelBlock: builder.mutation<any, { id: string; blocked: boolean }>({
+      query: ({ id, blocked }) => ({
+        url: `/parcels/block/${id}`,
+        method: "PATCH",
+        body: { blocked },
+      }),
+      invalidatesTags: ["Parcel"],
     }),
 
-    // ===== Public =====
-    trackParcel: builder.query<IParcel, string>({
+    /* -----------------------------------------
+       🌍 PUBLIC
+    ------------------------------------------ */
+
+    trackParcel: builder.query<any, string>({
       query: (trackingId) => `/parcels/track/${trackingId}`,
+    }),
+
+    /* -----------------------------------------
+       📜 HISTORY
+    ------------------------------------------ */
+
+    getParcelHistory: builder.query<any, string>({
+      query: (id) => `/parcels/history/${id}`,
     }),
   }),
 });
 
 export const {
-  // Sender
   useGetMyParcelsQuery,
   useCreateParcelMutation,
-  useCancelParcelMutation,
   useDeliverParcelMutation,
-
-  // Receiver
+  useCancelParcelMutation,
   useConfirmDeliveryMutation,
-
-  // Admin
-  useApproveParcelMutation,
   useGetAllParcelsQuery,
-
-  // Public
+  useUpdateParcelStatusMutation,
+  useToggleParcelBlockMutation,
   useTrackParcelQuery,
+  useGetParcelHistoryQuery,
 } = parcelApiSlice;

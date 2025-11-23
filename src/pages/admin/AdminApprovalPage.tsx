@@ -1,53 +1,89 @@
-// src/pages/AdminApproval.tsx
 import React from "react";
-import { useGetAllParcelsQuery, useApproveParcelMutation } from "@/services/parcelApiSlice";
 import { IParcel } from "@/types/parcel";
-import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
+import {
+  useGetAllParcelsQuery,
+  useUpdateParcelStatusMutation,
+} from "@/services/parcelApiSlice";
 
-export default function AdminApproval() {
-  const { data: parcels, isLoading } = useGetAllParcelsQuery();
-  const [approveParcel] = useApproveParcelMutation();
+const AdminApprovalPage: React.FC = () => {
+  // Fetch all parcels
+  const { data: parcels = [], isLoading, isError } = useGetAllParcelsQuery();
 
-  if (isLoading) return <p className="text-center py-6">Loading parcels...</p>;
+  // Mutation to approve/reject parcels
+  const [updateParcelStatus] = useUpdateParcelStatusMutation();
 
-  const pendingParcels = parcels?.filter((p) => p.status === "Pending") || [];
-
-  const handleApprove = async (parcel: IParcel) => {
+  const handleApprove = async (parcelId: string) => {
     try {
-      await approveParcel({ id: parcel._id!, status: "Dispatched" }).unwrap();
-      toast.success("Parcel approved and dispatched!");
+      await updateParcelStatus({ id: parcelId, status: "On the Way" }).unwrap();
+      alert("Parcel approved!");
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to approve parcel");
+      console.error(err);
+      alert(err?.data?.message || "Error updating parcel");
     }
   };
 
-  if (pendingParcels.length === 0)
-    return <p className="text-center py-6 text-gray-500">No parcels pending approval.</p>;
+  const handleReject = async (parcelId: string) => {
+    try {
+      await updateParcelStatus({ id: parcelId, status: "Rejected" }).unwrap();
+      alert("Parcel rejected!");
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.data?.message || "Error updating parcel");
+    }
+  };
+
+  if (isLoading) return <p>Loading parcels...</p>;
+  if (isError) return <p>Error loading parcels.</p>;
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Approval - Pending Parcels</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {pendingParcels.map((parcel) => (
-          <div key={parcel._id} className="border rounded p-4 shadow-md space-y-2">
-            <h2 className="font-semibold">Tracking ID: {parcel.trackingId}</h2>
-            <p>Type: {parcel.type}</p>
-            <p>Weight: {parcel.weight} kg</p>
-            <p>Pickup: {parcel.pickupAddress}</p>
-            <p>Delivery: {parcel.deliveryAddress}</p>
-            <p>Sender: {parcel.senderId}</p>
-            <p>Receiver: {parcel.receiverId}</p>
-            <p>Status: <strong>{parcel.status}</strong></p>
-            <Button
-              onClick={() => handleApprove(parcel)}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              ✅ Approve & Dispatch
-            </Button>
-          </div>
-        ))}
-      </div>
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">Admin Parcel Approvals</h1>
+      {parcels.length === 0 ? (
+        <p>No parcels available for approval.</p>
+      ) : (
+        <table className="min-w-full border">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="p-2 border">Tracking ID</th>
+              <th className="p-2 border">Sender</th>
+              <th className="p-2 border">Receiver</th>
+              <th className="p-2 border">Status</th>
+              <th className="p-2 border">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parcels.map((parcel: IParcel) => (
+              <tr key={parcel._id}>
+                <td className="p-2 border">{parcel.trackingId}</td>
+                <td className="p-2 border">{parcel.senderId}</td>
+                <td className="p-2 border">{parcel.receiverId || "Not assigned"}</td>
+                <td className="p-2 border">{parcel.status}</td>
+                <td className="p-2 border space-x-2">
+                  {parcel.status === "Pending" && parcel._id && (
+                    <>
+                      <button
+                        className="px-2 py-1 bg-green-500 text-white rounded"
+                        onClick={() => handleApprove(parcel._id!)}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        className="px-2 py-1 bg-red-500 text-white rounded"
+                        onClick={() => handleReject(parcel._id!)}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+                  {parcel.status !== "Pending" && <span>—</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
-}
+};
+
+export default AdminApprovalPage;

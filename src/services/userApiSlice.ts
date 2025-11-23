@@ -30,4 +30,5 @@ export const userApiSlice = createApi({
   }),
 });
 
+// ✅ Correct exports
 export const { useGetUsersQuery, useBlockUserMutation } = userApiSlice;

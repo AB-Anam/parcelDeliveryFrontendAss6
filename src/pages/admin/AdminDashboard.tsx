@@ -1,85 +1,128 @@
 // src/pages/admin/AdminDashboard.tsx
 import React from "react";
-import { useGetAllParcelsQuery } from "../../services/parcelApi";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { useGetUsersQuery } from "@/services/userApiSlice";
+import { useGetAllParcelsQuery } from "@/services/parcelApiSlice";
+import { IUser } from "@/types/user";
+import { IParcel } from "@/types/parcel";
+import { useBlockUserMutation } from "@/services/userApiSlice";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 
 const AdminDashboard: React.FC = () => {
-  const { data, isLoading, error } = useGetAllParcelsQuery();
+  // Fetch users
+  const { data: users, isLoading: usersLoading, isError: usersError } = useGetUsersQuery();
 
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
-      </div>
-    );
+  // Fetch parcels
+  const { data: parcels, isLoading: parcelsLoading, isError: parcelsError } = useGetAllParcelsQuery();
 
-  if (error)
-    return (
-      <div className="flex items-center justify-center h-screen text-red-600">
-        Error fetching parcels.
-      </div>
-    );
+  const [blockUser] = useBlockUserMutation();
+
+  const handleToggleBlock = async (user: IUser) => {
+    try {
+      await blockUser({ id: user._id, blocked: !user.blocked }).unwrap();
+    } catch (error) {
+      console.error("Error blocking/unblocking user:", error);
+    }
+  };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 p-6">
-        <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
-        <nav className="flex flex-col space-y-2">
-          <Button variant="ghost" className="justify-start w-full">Dashboard</Button>
-          <Button variant="ghost" className="justify-start w-full">Users</Button>
-          <Button variant="ghost" className="justify-start w-full">Parcels</Button>
-        </nav>
-      </aside>
+    <div className="p-6 space-y-8">
+      <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <Card className="shadow-md border border-gray-200">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold">All Parcels</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-medium text-gray-700">Parcel List</h2>
-              <Button variant="default">Add New Parcel</Button>
-            </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded shadow">
+          <p className="text-sm text-gray-500">Total Users</p>
+          <p className="text-xl font-bold">{users?.length || 0}</p>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <p className="text-sm text-gray-500">Total Parcels</p>
+          <p className="text-xl font-bold">{parcels?.length || 0}</p>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <p className="text-sm text-gray-500">Delivered Parcels</p>
+          <p className="text-xl font-bold">
+            {parcels?.filter((p: IParcel) => p.status === "delivered").length || 0}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <p className="text-sm text-gray-500">In-Transit Parcels</p>
+          <p className="text-xl font-bold">
+            {parcels?.filter((p: IParcel) => p.status === "in-transit").length || 0}
+          </p>
+        </div>
+      </div>
 
-            {data && data.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse bg-white rounded-lg">
-                  <thead>
-                    <tr className="bg-gray-100 text-left text-gray-700 uppercase text-sm">
-                      <th className="py-3 px-4">Tracking ID</th>
-                      <th className="py-3 px-4">Sender</th>
-                      <th className="py-3 px-4">Receiver</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.map((parcel) => (
-                      <tr key={parcel.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 font-mono">{parcel.trackingId}</td>
-                        <td className="py-3 px-4">{parcel.sender}</td>
-                        <td className="py-3 px-4">{parcel.receiver}</td>
-                        <td className="py-3 px-4 text-sm">{parcel.status}</td>
-                        <td className="py-3 px-4 space-x-2">
-                          <Button size="sm" variant="outline">View</Button>
-                          <Button size="sm" variant="destructive">Block</Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-gray-500">No parcels found.</p>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+      {/* Users Table */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">Users</h2>
+        {usersLoading ? (
+          <p>Loading users...</p>
+        ) : usersError ? (
+          <p className="text-red-500">Error loading users</p>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2 border">Name</th>
+                <th className="p-2 border">Email</th>
+                <th className="p-2 border">Role</th>
+                <th className="p-2 border">Blocked</th>
+                <th className="p-2 border">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users?.map((user: IUser) => (
+                <tr key={user._id} className="hover:bg-gray-50">
+                  <td className="p-2 border">{user.name}</td>
+                  <td className="p-2 border">{user.email}</td>
+                  <td className="p-2 border">{user.role}</td>
+                  <td className="p-2 border">{user.blocked ? "Yes" : "No"}</td>
+                  <td className="p-2 border">
+                    <Button
+                      size="sm"
+                      onClick={() => handleToggleBlock(user)}
+                      className={user.blocked ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"}
+                    >
+                      {user.blocked ? "Unblock" : "Block"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Parcels Table */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">Parcels</h2>
+        {parcelsLoading ? (
+          <p>Loading parcels...</p>
+        ) : parcelsError ? (
+          <p className="text-red-500">Error loading parcels</p>
+        ) : (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2 border">Tracking ID</th>
+                <th className="p-2 border">Type</th>
+                <th className="p-2 border">Weight</th>
+                <th className="p-2 border">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {parcels?.map((p: IParcel) => (
+                <tr key={p._id} className="hover:bg-gray-50">
+                  <td className="p-2 border">{p.trackingId}</td>
+                  <td className="p-2 border">{p.type}</td>
+                  <td className="p-2 border">{p.weight}</td>
+                  <td className="p-2 border">{p.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };
